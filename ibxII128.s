@@ -43,8 +43,8 @@ IBX:    .ASCIIZ "#  ####  #   #  ### ####  #   #  # #     # #  #  ####    #     
 WEL:    .ASCIIZ "WELCOME!"
 MSG:    .ASCIIZ "HAVE YOU INSPECTED A WARHEAD TODAY?"
 BINBOR: .BYTE $11, $27, $3D, $53, $69, $7F, $95, $AB, $C1, $D7, $ED, $00
-        
-.segment "DATA"        
+
+.segment "DATA"
 SUBR:   .BYTE $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00
 MULR:    .BYTE $00,$00,$00
 OSQR:    .BYTE $00,$00,$00,$00,$00,$00,$00,$00 ;64bit for division
@@ -52,7 +52,7 @@ REMAIND: .BYTE $00,$00,$00,$00,$00,$00,$00,$00 ;for division
 DIVTMP:  .BYTE $00,$00,$00,$00,$00,$00,$00,$00
 CHIS:    .BYTE $00,$00,$00,$00,$00,$00,$00,$00 ;will hold chi square result
 ;;; Template and Inspection result memory
-;;;  Zero Values
+;;; Zero Values
 ;; TEMP:   .BYTE $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00
 ;; INSP:   .BYTE $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00, $00,$00,$00
 ;;; Some test values
@@ -66,7 +66,7 @@ INSP:   .BYTE $19,$1b,$00, $6c,$3c,$00, $7d,$28,$00, $20,$2b,$00, $4b,$2c,$00, $
 ;;; --------------------------------------------------------------------------------
 ;;; Main routine
 ;;; --------------------------------------------------------------------------------
-        
+
 .segment "STARTUP"
 
         ;; Memory addresses
@@ -75,9 +75,9 @@ INSP:   .BYTE $19,$1b,$00, $6c,$3c,$00, $7d,$28,$00, $20,$2b,$00, $4b,$2c,$00, $
         ;; usually HV in 2, ADC in 4
         adcbaseaddress = 49344
         hvbaseaddress = 49312
-        
+
         ;; Some memory for operation
-        memorylowbyte = $8000    
+        memorylowbyte = $8000
         memoryhighbyte = $8100
         plotbuffer = $8800
         hvstatus = $8900
@@ -103,16 +103,15 @@ INSP:   .BYTE $19,$1b,$00, $6c,$3c,$00, $7d,$28,$00, $20,$2b,$00, $4b,$2c,$00, $
         ;; threshold for pass/fail (pass when chisquare < passthreshold)
         passthreshold = $20
         ;;bitmask for count b8-b15 (plots every (plotevery+1) * 256 counts)
-        plotevery = $0F            
+        plotevery = $0F
 
-        
         ;; Save HV status and level as off to memory
         LDA #$00
         STA hvstatus
         STA hvlevel
 
         ;; Clear screen and display friendly welcome
-        JSR $FC58               ;HOME (clear screen)
+        JSR $FC58               ; HOME (clear screen)
         JSR WELC
 
         ;; Output prompt loop
@@ -137,12 +136,12 @@ OUT:    LDX #0
         ;; HV Text
         LDA hvstatus
         BNE DHVOFF
-        
+
         LDX #0
         STX $24
         LDX #0
         LDA HVON,X ; load initial char
-@LP2:    ORA #$80
+@LP2:   ORA #$80
         JSR $FDF0 ; cout
         INX
         LDA HVON,X
@@ -154,7 +153,7 @@ DHVOFF:
         STX $24
         LDX #0
         LDA HVOFF,X ; load initial char
-@LP2:    ORA #$80
+@LP2:   ORA #$80
         JSR $FDF0 ; cout
         INX
         LDA HVOFF,X
@@ -226,14 +225,14 @@ N3:     DEX
         BNE N4
         JSR SHOWR
         JMP OUT
-N4:     JSR $FBDD               ;Beep
+N4:     JSR $FBDD               ; Beep
         JMP OUT
 
 ;;; --------------------------------------------------------------------------------
 ;;; SUBROUTINE MEASURE
 ;;; --------------------------------------------------------------------------------
 MEASURE:
-        
+
         ;; Addresses for 12-Bit ADC board
         ledaddress = adcbaseaddress
         resetaddress = adcbaseaddress + 1
@@ -280,18 +279,17 @@ LPH:    LDA #$0
 RSADC:  LDA resetaddress        ; ADC reset by read specific address
         ;; Wait for LSB=1 in status (PD&H circuit triggered)
 LS:     LDA #$01
-        AND statusaddress       
+        AND statusaddress
         BEQ LS
         ;; Wait for Bit1=0 in status (conversion done)
 LI:     LDA #$02
-        AND statusaddress       
+        AND statusaddress
         BNE LI
 
-        
         LDA adchighaddress
         ASL                     ; Move out highest bit
         TAX
-        LDA #$80        
+        LDA #$80
         AND adclowaddress       ; take highest bit from low (only 4 anyway)
         BEQ NOIN
         INX
@@ -306,7 +304,6 @@ NOIN:   INC memorylowbyte, X
         ;; CMP memoryhighbyte, X
         ;; BEQ ENDREC
 NOHIGH: 
-
 
         INC totcount0
         BNE CTDONE
@@ -332,7 +329,7 @@ ENDREC:
         JSR PLBFS
         JSR DRAWS
 ;;; end of main readout loop
-        
+
         ;; clear output
         LDA #$8D ; next line
         JSR $FDED
@@ -348,7 +345,7 @@ ENDREC:
 ;;; carries out measurement, stores big bin data in TEMP
 ;;; --------------------------------------------------------------------------------
 TEMPLATE:
-        
+
         JSR MEASURE
 
         ;; Set p1 to Template storage
@@ -356,7 +353,7 @@ TEMPLATE:
         STA p1
         LDA #>TEMP
         STA p1 + 1
-        
+
         JSR ANALY
         RTS
 
@@ -374,7 +371,7 @@ INSPECT:
         STA p1 + 1
 
         JSR ANALY
-        
+
         RTS
 
 ;;; --------------------------------------------------------------------------------
@@ -386,7 +383,7 @@ RMPON:  LDA #$00
         STA hvbaseaddress
         LDA #$01
         STA hvstatus
-        
+
         LDA hvbaseaddress + 1   ; Enable HV
 
         ;; Ramp HV
@@ -399,7 +396,7 @@ RMPON:  LDA #$00
         INX
         LDA THVON,X
         BNE @LP
-        
+
         INC hvlevel
         LDA hvlevel
         STA hvbaseaddress
@@ -431,14 +428,14 @@ RMPON:  LDA #$00
         JSR $FDF0 ; cout
         DEX
         BNE @LP7
-        
+
         RTS
 
 ;;; --------------------------------------------------------------------------------
 ;;; SUBROUTINE TGHVOFF
 ;;; (toggle HV off)
 ;;; --------------------------------------------------------------------------------
-TGHVOFF:     
+TGHVOFF:
 RMPOFF: LDX #0
         STX $24
         LDX #0
@@ -448,7 +445,7 @@ RMPOFF: LDX #0
         INX
         LDA THVOFF,X
         BNE @LP
-        
+
         DEC hvlevel
         LDA hvlevel
         STA hvbaseaddress
@@ -467,9 +464,9 @@ RMPOFF: LDX #0
 
         LDA #$00
         STA hvstatus
-        
+
         LDA hvbaseaddress + 2   ; Disable HV
-        
+
         LDY #$FF
 @LYE:   LDX #$FF
 @LXE:   DEX
@@ -484,16 +481,15 @@ RMPOFF: LDX #0
         JSR $FDF0 ; cout
         DEX
         BNE @LP7
-        
-        RTS
 
+        RTS
 
 ;;; --------------------------------------------------------------------------------
 ;;; SUBROUTINE PLBFS
 ;;; prepares plot buffer from last recorded spectrum
 ;;; (divides count rates by 2^3)
 ;;; --------------------------------------------------------------------------------
-PLBFS:  
+PLBFS:
         LDX #$0
 LPS:    LDA memorylowbyte, X
         LSR
@@ -507,9 +503,9 @@ LPS:    LDA memorylowbyte, X
         ASL
         ASL
         ASL   ; comment out this line for 2^4 division
-        ; additional "delete high bit", not used anymore        
-        ;; ASL  
-        ;; LSR  
+        ; additional "delete high bit", not used anymore
+        ;; ASL
+        ;; LSR
         ADC plotbuffer, X
         STA plotbuffer, X
         LDA #plotoffset
@@ -542,26 +538,26 @@ DRAWS:
         ;; ;; DEBUG
         ;; RTS
         ;; ;; DEBUG
-        
+
         LDX #$0
 DRAWLP: LDA plotbuffer, X
         BEQ ZEROLP
         TXA
         PHA
-        
+
         ;; Point
-        LDY #$0                ;Horizontal HI
+        LDY #$0                 ; Horizontal HI
         ;; X is Horizontal Low (and st)
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
         PLA                     ; Load and
         PHA                     ; Store again
         TAX
         LDY plotbuffer, X       ; Vertical
         ;; A is H Low (from store)
-        LDX #$0                ; H Hi
-        JSR $F53A               ;HLINE
+        LDX #$0                 ; H Hi
+        JSR $F53A               ; HLINE
 
         PLA
         TAX
@@ -576,137 +572,137 @@ BINS:
 ;;; SUBROUTINE GRIDL
 ;;; draws grid lines
 ;;; --------------------------------------------------------------------------------
-GRIDL:  LDY #$0                 ;H HI
+GRIDL:  LDY #$0                 ; H Hi
         LDX #$40                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$40                ;H Lo
+        LDY #$0                 ; V
+        LDA #$40                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H Hi
         LDX #$41                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$0                 ;V
-        LDA #$41                ;H Lo
-        LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; V
+        LDA #$41                ; H Lo
+        LDX #$0                 ; H Hi
+        JSR $F53A               ; HLINE
+
+        LDY #$0                 ; H HI
         LDX #$80                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$80                ;H Lo
+        LDY #$0                 ; V
+        LDA #$80                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H HI
         LDX #$81                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$81                ;H Lo
+        LDY #$0                 ; V
+        LDA #$81                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H Hi
         LDX #$C0                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$C0               ;H Lo
+        LDY #$0                 ; V
+        LDA #$C0                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE        
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H Hi
         LDX #$C1                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$C1               ;H Lo
+        LDY #$0                 ; V
+        LDA #$C1                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE        
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H Hi
         LDX #$00                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$00                ;H Lo
+        LDY #$0                 ; V
+        LDA #$00                ; H Lo
         LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE
+        JSR $F53A               ; HLINE
 
-        LDY #$0                 ;H HI
+        LDY #$0                 ; H Hi
         LDX #$01                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$0                 ;V
-        LDA #$01                ;H Lo
-        LDX #$0                 ; H Hi
-        JSR $F53A               ;HLINE        
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$01                 ;H HI
+        LDY #$0                 ; V
+        LDA #$01                ; H Lo
+        LDX #$0                 ; H Hi
+        JSR $F53A               ; HLINE
+
+        LDY #$01                ; H Hi
         LDX #$00                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$0                 ;V
-        LDA #$00                ;H Lo
-        LDX #$01                 ; H Hi
-        JSR $F53A               ;HLINE
+        LDY #$0                 ; V
+        LDA #$00                ; H Lo
+        LDX #$01                ; H Hi
+        JSR $F53A               ; HLINE
 
-        LDY #$01                 ;H HI
+        LDY #$01                ; H Hi
         LDX #$01                ; X is H Low
-        LDA #plotoffset         ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$0                 ;V
-        LDA #$01                ;H Lo
-        LDX #$01                 ; H Hi
-        JSR $F53A               ;HLINE        
+        LDA #plotoffset         ; V
+        JSR $F457               ; HPLOT
+
+        LDY #$0                 ; V
+        LDA #$01                ; H Lo
+        LDX #$01                ; H Hi
+        JSR $F53A               ; HLINE
 
         ;; vertical lines
-        LDY #$00                 ;H HI
+        LDY #$00                ; H Hi
         LDX #$00                ; X is H Low
-        LDA #$35                 ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$35                ;V
-        LDA #$01                ;H Lo
-        LDX #$01                 ; H Hi
-        JSR $F53A               ;HLINE        
+        LDA #$35                ; V
+        JSR $F457               ; HPLOT
 
-        LDY #$00                 ;H HI
-        LDX #$00                ; X is H Low
-        LDA #$6A                ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$6A                 ;V
-        LDA #$01                ;H Lo
-        LDX #$01                 ; H Hi
-        JSR $F53A               ;HLINE        
+        LDY #$35                ; V
+        LDA #$01                ; H Lo
+        LDX #$01                ; H Hi
+        JSR $F53A               ; HLINE
 
-        LDY #$00                 ;H HI
+        LDY #$00                ; H Hi
         LDX #$00                ; X is H Low
-        LDA #$00                ;V
-        JSR $F457               ;HPLOT
-        
-        LDY #$00                 ;V
-        LDA #$01                ;H Lo
-        LDX #$01                 ; H Hi
-        JSR $F53A               ;HLINE        
-        
+        LDA #$6A                ; V
+        JSR $F457               ; HPLOT
+
+        LDY #$6A                ; V
+        LDA #$01                ; H Lo
+        LDX #$01                ; H Hi
+        JSR $F53A               ; HLINE
+
+        LDY #$00                ; H Hi
+        LDX #$00                ; X is H Low
+        LDA #$00                ; V
+        JSR $F457               ; HPLOT
+
+        LDY #$00                ; V
+        LDA #$01                ; H Lo
+        LDX #$01                ; H Hi
+        JSR $F53A               ; HLINE
+
         RTS
 
 ;;; --------------------------------------------------------------------------------
@@ -715,18 +711,16 @@ GRIDL:  LDY #$0                 ;H HI
 ;;; 
 ;;; summarizes last recorded spectrum in memory at the address in p1
 ;;; --------------------------------------------------------------------------------
-ANALY:  LDA #$00                ;reset values
+ANALY:  LDA #$00                ; reset values
         LDY #$00
 @RLP:   STA (p1), Y
         INY
         CPY #$24
         BNE @RLP
-        
-        
-        LDX #$00                ;X counts channels
-        LDA #$00
-        STA bincount             ; counts big bins
 
+        LDX #$00                ; X counts channels
+        LDA #$00
+        STA bincount            ; counts big bins
 
 @LP:    LDY #$00
         LDA (p1), Y
@@ -739,7 +733,7 @@ ANALY:  LDA #$00                ;reset values
         STA (p1), Y
         INY
         LDA (p1), Y
-        ADC #$00                ;only add carry if necessary
+        ADC #$00                ; only add carry if necessary
         STA (p1), Y
 
         LDY bincount
@@ -766,8 +760,8 @@ ANALY:  LDA #$00                ;reset values
 ;;; SUBROUTINE SHOWR
 ;;; shows both big bins
 ;;; --------------------------------------------------------------------------------
-SHOWR:  JSR $FB2F               ;TEXT Mode
-        JSR $FC58               ;HOME (clear screen)
+SHOWR:  JSR $FB2F               ; TEXT Mode
+        JSR $FC58               ; HOME (clear screen)
 
         ;; Reset chi square result memory
         LDA #$00
@@ -799,7 +793,6 @@ SHOWR:  JSR $FB2F               ;TEXT Mode
         TXA
         PHA
 BLP:    JSR OBINA
-
 
         ;; only add when template count in this channel not zero
         LDY #$02
@@ -857,15 +850,15 @@ NOADD:
         PLA
 
         ;; check higher bytes. should be zero - otherwise fail
-        LDX #$07                
+        LDX #$07
 @LP:    LDA CHIS, X
         BNE FAILL
         DEX
         CPX #$02
         BNE @LP
 
-        ;;byte 02 needs to be compared to passthreshold - lowest significant integer value
-        LDA CHIS, X             
+        ;; byte 02 needs to be compared to passthreshold - lowest significant integer value
+        LDA CHIS, X
         CMP #passthreshold
         BCS FAILL
 
@@ -874,9 +867,9 @@ NOADD:
         STA p1
         LDA #>PBIG
         STA p1 + 1
-        
+
         JMP SEND
-        
+
 FAILL:   
         ;; set p1 to fail string address
         LDA #<FBIG
@@ -939,7 +932,7 @@ CNSH:   DEX
         DEX
         LDA CHIS, X
         JSR $FDDA
-        
+
         LDA #19
         STA $25
         LDA #$8D ; next line (somehow $25 is only active after another output?)
@@ -1003,10 +996,10 @@ ISPOS:
         STA MULR, Y
 
         LDA #$00
-        STA OSQR+3              ;clear upper half of product
+        STA OSQR+3              ; clear upper half of product
         STA OSQR+4
         STA OSQR+5
-        LDX #$18                ;set binary count to 24
+        LDX #$18                ; set binary count to 24
 SHIR:   LSR MULR + 2
         ROR MULR + 1
         ROR MULR
@@ -1047,20 +1040,20 @@ BMUL:   LDA OSQR, Y
         STA OSQR, X
 
         ;; Division
-	lda #0	        ;preset REMAIND to 0
+        lda #0          ; preset REMAIND to 0
         LDY #$08
-@LP1:	STA REMAIND, Y
+@LP1:   STA REMAIND, Y
         DEY
         BPL @LP1
-	ldx #(8 * 8)    ;repeat for each bit
-        stx bincount    ;use additional register (ZP) for bitcount
+        ldx #(8 * 8)    ; repeat for each bit
+        stx bincount    ; use additional register (ZP) for bitcount
 
-DIL:    ASL OSQR	;dividend lb & hb*2, msb -> Carry
+DIL:    ASL OSQR        ; dividend lb & hb*2, msb -> Carry
         LDX #$01
 @LP:    ROL OSQR, X
         INX
         TXA
-        EOR #$08        ;loop includes 1-6
+        EOR #$08        ; loop includes 1-6
         BNE @LP
         LDX #$00
 @LP2:   ROL REMAIND, X
@@ -1069,44 +1062,42 @@ DIL:    ASL OSQR	;dividend lb & hb*2, msb -> Carry
         EOR #$08
         BNE @LP2
 
-        
-        LDY #$00        ;Only divide at maximum by three significant
-	LDA REMAIND, Y  ;bytes, loop with 00 for others
-	SEC                     
+        LDY #$00        ; Only divide at maximum by three significant
+        LDA REMAIND, Y  ; bytes, loop with 00 for others
+        SEC                     
         SBC (p1), Y     
-        STA DIVTMP, Y   ;we might need result later
-        INY             ;Y = 1
-	LDA REMAIND, Y
+        STA DIVTMP, Y   ; we might need result later
+        INY             ; Y = 1
+        LDA REMAIND, Y
         SBC (p1), Y
         STA DIVTMP, Y
-        INY             ;Y = 2
-	LDA REMAIND, Y
+        INY             ; Y = 2
+        LDA REMAIND, Y
         SBC (p1), Y
         BCC skip
         STA DIVTMP, Y
         INY             ;
-@LP3:	LDA REMAIND, Y
+@LP3:   LDA REMAIND, Y
         SBC #$00
         STA DIVTMP, Y
         INY
         TYA
         EOR #$08 - 1
         BNE @LP3
-	LDA REMAIND, Y
+        LDA REMAIND, Y
         SBC #$00
         BCC skip
-        
 
-DSL:    STA REMAIND, Y	;else save substraction result as new REMAIND,
-        DEY             ;Y goes down again
-	lda DIVTMP, Y
-	sta REMAIND, Y
+DSL:    STA REMAIND, Y  ; else save substraction result as new REMAIND,
+        DEY             ; Y goes down again
+        lda DIVTMP, Y
+        sta REMAIND, Y
         CPY #$00
         BNE DSL
-	inc OSQR 	;and INCrement result cause divisor fit in 1 times
+        inc OSQR        ; and INCrement result cause divisor fit in 1 times
 
 skip:   dec bincount
-	bne DIL
+        bne DIL
 
         RTS
 
@@ -1124,57 +1115,57 @@ WELC:   LDA #<IBX
         STX bincount
         LDX #7
         STX $25
-        LDA #$8D ; next line (somehow $25 is only active after another output?)
+        LDA #$8D        ; next line (somehow $25 is only active after another output?)
         JSR $FDED
         LDX #8
         STX $24
         LDY #0
-        LDA (p1),Y ; load initial char
+        LDA (p1),Y      ; load initial char
 WBL:    ORA #$80
-        JSR $FDF0 ; cout
+        JSR $FDF0       ; cout
         INY
         CPY bincount
         BNE WNL
         LDA #$16
         ADC bincount
         STA bincount
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
         LDA #8
         STA $24
 WNL:    LDA (p1),Y
         BNE WBL
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
 
         LDX #15
         STX $24
         LDX #0
-        LDA WEL,X ; load initial char
+        LDA WEL,X       ; load initial char
 @LP:    ORA #$80
-        JSR $FDF0 ; cout
+        JSR $FDF0       ; cout
         INX
         LDA WEL,X
         BNE @LP
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
 
         LDX #3
         STX $24
         LDX #0
-        LDA MSG,X ; load initial char
+        LDA MSG,X       ; load initial char
 @LP2:   ORA #$80
-        JSR $FDF0 ; cout
+        JSR $FDF0       ; cout
         INX
         LDA MSG,X
         BNE @LP2
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
-        LDA #$8D ; next line
+        LDA #$8D        ; next line
         JSR $FDED
 
         RTS
