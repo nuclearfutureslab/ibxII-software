@@ -4,6 +4,6 @@ This is the Software for the IBX ]\[, presented at 34C3. IBX ]\[ is an informati
 The `Makefile` assembles, links and creates a bootable Apple II disk image. 
 
 ## Requirements 
-* [ca65 assembler](www.cc65.org)
+* [ca65 assembler](http://www.cc65.org)
 * [dos33fsprogs](https://github.com/deater/dos33fsprogs) (Tools do manipulate DOS 3.3 disk images)
 * [AppleCommander](https://applecommander.github.io/) - The JAR file should be placed directly outside this project's directory and renamed as `ac.jar` to allow `make` to find it. 
