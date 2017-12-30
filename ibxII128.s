@@ -546,7 +546,7 @@ DRAWLP: LDA plotbuffer, X
         PHA
 
         ;; Point
-        LDY #$0                 ; Horizontal HI
+        LDY #$0                 ; Horizontal Hi
         ;; X is Horizontal Low (and st)
         LDA #plotoffset         ; V
         JSR $F457               ; HPLOT
@@ -592,7 +592,7 @@ GRIDL:  LDY #$0                 ; H Hi
         LDX #$0                 ; H Hi
         JSR $F53A               ; HLINE
 
-        LDY #$0                 ; H HI
+        LDY #$0                 ; H Hi
         LDX #$80                ; X is H Low
         LDA #plotoffset         ; V
         JSR $F457               ; HPLOT
@@ -602,7 +602,7 @@ GRIDL:  LDY #$0                 ; H Hi
         LDX #$0                 ; H Hi
         JSR $F53A               ; HLINE
 
-        LDY #$0                 ; H HI
+        LDY #$0                 ; H Hi
         LDX #$81                ; X is H Low
         LDA #plotoffset         ; V
         JSR $F457               ; HPLOT
